@@ -6,6 +6,8 @@ import voluptuous as vol
 
 from homeassistant.components.mqtt import valid_publish_topic, valid_subscribe_topic
 from homeassistant.const import (
+    ATTR_DOMAIN,
+    ATTR_SERVICE,
     ATTR_SERVICE_DATA,
     EVENT_CALL_SERVICE,
     EVENT_STATE_CHANGED,
@@ -85,6 +87,12 @@ def async_setup(hass, config):
         event = json.loads(msg.payload)
         event_type = event.get("event_type")
         event_data = event.get("event_data")
+        
+        if event_type == EVENT_CALL_SERVICE and event_data:
+            hass.loop.create_task(hass.services.async_call(
+                event_data.get(ATTR_DOMAIN),
+                event_data.get(ATTR_SERVICE),
+                event_data.get(ATTR_SERVICE_DATA, {})))
 
         # Special case handling for event STATE_CHANGED
         # We will try to convert state dicts back to State objects
